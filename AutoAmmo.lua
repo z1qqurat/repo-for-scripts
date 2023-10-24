@@ -1,6 +1,6 @@
 script_name('AutoAmmo')
 script_author('Patlatuk')
-script_version("1.3")
+script_version("1.31")
 
 local SE = require 'lib.samp.events'
 local imgui, ffi = require 'mimgui', require 'ffi'
@@ -306,11 +306,11 @@ function ()
 end)
 
 function SE.onServerMessage(color, text)
-	if string.find(text, "^ Подождите немного$") or string.find(text, "^ Вы не можете взять больше патронов для этого оружия") then
+	if string.find(text, "^ ГЏГ®Г¤Г®Г¦Г¤ГЁГІГҐ Г­ГҐГ¬Г­Г®ГЈГ®$") or string.find(text, "^ Г‚Г» Г­ГҐ Г¬Г®Г¦ГҐГІГҐ ГўГ§ГїГІГј ГЎГ®Г«ГјГёГҐ ГЇГ ГІГ°Г®Г­Г®Гў Г¤Г«Гї ГЅГІГ®ГЈГ® Г®Г°ГіГ¦ГЁГї") then
 		thisScript():reload()
 		return true
 	end
-	if color == 162529535 and string.find(text, "^ Выдано: Броня$") then
+	if color == 162529535 and string.find(text, "^ Г‚Г»Г¤Г Г­Г®: ГЃГ°Г®Г­Гї$") then
 		if cfg.settings.state and cfg.settings.isArmorTimerEnabled then
 			armorTimer = os.time() + 30
 			cfg.settings.armorTimer = armorTimer
@@ -322,8 +322,7 @@ function SE.onServerMessage(color, text)
 end
 
 function SE.onShowDialog(dialogid, style, title, button1, button2, text)
-notf(dialogid)
-	if dialogid == 1166 and string.find(title, "Склад оружия") and cfg.settings.state then
+	if dialogid == 1166 and string.find(title, "Г‘ГЄГ«Г Г¤ Г®Г°ГіГ¦ГЁГї") and cfg.settings.state then
 		if cfg.settings.deagle then
 			local a = getAmmoInCharWeapon(PLAYER_PED, 24)
 			if a < 63 then
@@ -397,7 +396,7 @@ notf(dialogid)
 		isArmorTaken = false
 		return false
 
-	elseif dialogid == 123 and string.find(title, "Склад оружия") and cfg.settings.state then
+	elseif dialogid == 123 and string.find(title, "Г‘ГЄГ«Г Г¤ Г®Г°ГіГ¦ГЁГї") and cfg.settings.state then
 		if not isGettingAmmo then
 			isGettingAmmo = true
 			lua_thread.create(getGun)
