@@ -1,6 +1,6 @@
 script_name('AutoAmmo')
 script_author('Patlatuk')
-script_version("1.33")
+script_version("1.4")
 
 local SE = require 'lib.samp.events'
 local imgui, ffi = require 'mimgui', require 'ffi'
@@ -30,6 +30,7 @@ local cfg = inicfg.load({
 		timerH = 225,
 		fontSize = 10,
 		armorTimer = 0,
+		gasTimer = 0,
     },
 }, "AutoAmmo.ini")
 
@@ -52,7 +53,6 @@ local special = new.bool(cfg.settings.special)
 local isArmorTimerEnabled = new.bool(cfg.settings.isArmorTimerEnabled)
 
 local renderFont = renderCreateFont("Arial", cfg.settings.fontSize, FCR_BORDER + FCR_BOLD)
-local armorTimer = cfg.settings.armorTimer
 local reserve_x, reserve_y
 
 function main()
@@ -64,8 +64,6 @@ function main()
 	if isLoadMessageEnabled[0] then
 		notf("Script is loaded. Open menu: /aa. Quick toggle - /aaa")
 	end
-	lua_thread.create(drawArmorTimer)
-
 
     sampRegisterChatCommand('aa', showMainMenu)
 	sampRegisterChatCommand('aaa', toggleStatus)
@@ -79,6 +77,18 @@ function main()
 
 	while true do
 		wait(0)
+		if cfg.settings.isArmorTimerEnabled and (cfg.settings.armorTimer >= os.time()) then
+			local timer = cfg.settings.armorTimer - os.time()
+			local text = ""
+			local second = timer % 60
+			text = string.format("Next Armor: %02d", second)
+			if(second <= 5 and second % 2 > 0) then
+				text = "{f4b800}" .. text
+			end
+			renderFontDrawText(renderFont, text, sw - cfg.settings.timerW, sh - cfg.settings.timerH, 0xFFFFFFC9)
+		-- else
+		-- 	return
+		 end
 	end
 end
 
@@ -306,16 +316,20 @@ function ()
 end)
 
 function SE.onServerMessage(color, text)
-	if string.find(text, "^ Подождите немного") or string.find(text, "^ Вы не можете взять больше патронов для этого оружия") then
-		lua_thread.create(reloadScript)
-		return true
-	end
-	if color == 162529535 and string.find(text, "^ Выдано: Броня$") then
-		if cfg.settings.state and cfg.settings.isArmorTimerEnabled then
-			armorTimer = os.time() + 30
-			cfg.settings.armorTimer = armorTimer
+	if cfg.settings.state then
+		if string.find(text, "Подождите немного") or string.find(text, "^ Вы не можете взять больше патронов для этого оружия") then
+			lua_thread.create(reloadScript)
+			return true
+		end
+		if color == 162529535 and string.find(text, "^ Выдано: Броня$") then
+			cfg.settings.armorTimer = os.time() + 30
 			inicfg.save(cfg, "AutoAmmo")
-		--	lua_thread.create(drawArmorTimer)
+			return true
+		end
+
+		if color == 162529535 and string.find(text, "^ Выдано: Спец оружие$") then
+			cfg.settings.gasTimer = os.time() + 30
+			inicfg.save(cfg, "AutoAmmo")
 			return true
 		end
 	end
@@ -370,28 +384,31 @@ function SE.onShowDialog(dialogid, style, title, button1, button2, text)
 					sampSendDialogResponse(dialogid, 1, 6, "")
 					return false
 				end
-			elseif cfg.settings.fraction == 2 then
+			end
+			if cfg.settings.fraction == 2 and cfg.settings.gasTimer <= os.time()then
 				local a = getAmmoInCharWeapon(PLAYER_PED, 17)
 				if a < 10 then
 					sampSendDialogResponse(dialogid, 1, 6, "")
 					return false
 				end
-			else
+			end
+			if cfg.settings.fraction == 3 then
 				local a = getAmmoInCharWeapon(PLAYER_PED, 46)
 				if a ~= 1 then
 					sampSendDialogResponse(dialogid, 1, 6, "")
 					return false
 				end
 			end
+
 		end
 		
-		if cfg.settings.armor and not isArmorTaken then
+		if cfg.settings.armor and cfg.settings.armorTimer <= os.time() and not isArmorTaken then
 			sampSendDialogResponse(dialogid, 1, 5, "")
 			isArmorTaken = true
 			return false
 		end
 
-		sampCloseCurrentDialogWithButton(0)
+		-- sampCloseCurrentDialogWithButton(0)
 		isArmorTaken = false
 		return false
 
@@ -466,25 +483,16 @@ end
 function reloadScript()
 	while true do
 		wait(250)
+		sampCloseCurrentDialogWithButton(0)
+		wait(250)
 		thisScript():reload()
 	end
 end
 
-function drawArmorTimer()
+function closeDialog()
 	while true do
-		wait(0)
-		if cfg.settings.isArmorTimerEnabled and (armorTimer >= os.time()) then
-			local timer = armorTimer - os.time()
-			local text = ""
-			local second = timer % 60
-			text = string.format("Next Armor: %02d", second)
-			if(second <= 5 and second % 2 > 0) then
-				text = "{f4b800}" .. text
-			end
-			renderFontDrawText(renderFont, text, sw - cfg.settings.timerW, sh - cfg.settings.timerH, 0xFFFFFFC9)
-		-- else
-		-- 	return
-		 end
+		wait(250)
+		sampCloseCurrentDialogWithButton(0)
 	end
 end
 
