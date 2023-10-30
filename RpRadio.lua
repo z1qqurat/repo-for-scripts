@@ -26,7 +26,7 @@ function main()
   end
 
   sampRegisterChatCommand('rprad', toggleStatus)
-  sampRegisterChatCommand('rprad', toggleStatus)
+
   while true do
     wait(0)
     if send_radio then
