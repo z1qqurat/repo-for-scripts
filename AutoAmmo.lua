@@ -1,6 +1,6 @@
 script_name('AutoAmmo')
 script_author('Patlatuk')
-script_version("1.4")
+script_version("1.5")
 
 local SE = require 'lib.samp.events'
 local imgui, ffi = require 'mimgui', require 'ffi'
@@ -336,7 +336,7 @@ function SE.onServerMessage(color, text)
 end
 
 function SE.onShowDialog(dialogid, style, title, button1, button2, text)
-	if dialogid == 1166 and string.find(title, "Склад оружия") and cfg.settings.state then
+	if string.find(title, "Склад оружия %[") and cfg.settings.state then
 		if cfg.settings.deagle then
 			local a = getAmmoInCharWeapon(PLAYER_PED, 24)
 			if a < 63 then
@@ -412,7 +412,7 @@ function SE.onShowDialog(dialogid, style, title, button1, button2, text)
 		isArmorTaken = false
 		return false
 
-	elseif dialogid == 123 and string.find(title, "Склад оружия") and cfg.settings.state then
+	elseif title == "Склад оружия" and cfg.settings.state then
 		if not isGettingAmmo then
 			isGettingAmmo = true
 			lua_thread.create(getGun)
